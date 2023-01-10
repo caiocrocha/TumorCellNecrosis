@@ -15,3 +15,5 @@ Para executar e salvar a solução a cada segundo, rodar a linha de cmd a seguir
 ```
 
 Será executada uma simulação de 5 min da temperatura na região tumoral, que leva em torno de 1m30s (Intel i7-1165G7 8GB). 
+A solução será salva num arquivo de texto, no qual cada linha representa a matriz de dimensões 101 x 101 "aplanada" (flattened) num dado instante de tempo. 
+Cada instante de tempo vale 1 s. 
