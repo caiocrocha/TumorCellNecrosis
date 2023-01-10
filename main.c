@@ -1,0 +1,172 @@
+#include <stdio.h>
+#include <math.h>
+
+//Funcoes auxiliares
+
+//Distancia r da origem
+double get_distance(double x, double y)
+{
+    return sqrt(x*x + y*y);
+}
+
+//Media harmonica para calcular k_{i+1/2} ou k_{i-1/2}
+double harmonic_mean(double kp, double km)
+{
+    return 2.0*kp*km/(kp+km);
+}
+
+//Variaveis dependentes de r
+//se r > 0.01m, k do tecido saudavel, se não, k do tumor
+double get_k(double r)
+{
+    return (r > 0.01) ? 0.5 : 0.55;
+}
+
+//se r > 0.01m, w_b do tecido saudavel, se não, w_b do tumor
+double get_wb(double r)
+{
+    return (r > 0.01) ? 0.0005 : 0.00125;
+}
+
+//funcao do calor externo Qr para um ponto de aplicacao da injecao
+double get_q(double r)
+{
+    return 1300000.0 * exp(-r*r/(0.0031*0.0031));
+}
+
+//generate a range of evenly spaced numbers within [start, end) just like numpy's arange function
+void arange(double *x, double start, double end, double step)
+{
+    int i;
+    for(i = 0; i < (int) ceil((end-start)/step); i++)
+    {
+        x[i] = start + i * step;
+    }
+} 
+
+void write_2d_array_to_file(FILE* file, int rows, int cols, double array[][cols])
+{
+    int i, j;
+    for (i = 0; i < rows; i++) 
+    {
+        for (j = 0; j < cols; j++) 
+        {
+            fprintf(file, "%.15f ", array[i][j]);
+        }
+        fprintf(file, "\n");
+    }
+}
+
+int main()
+{
+    //define space discretization
+    double h_x=0.001;
+    double start_x=-0.05;
+    double end_x=0.05;
+
+    //define time discretization
+    double h_t=0.001;
+    double end_t = 300.0;
+    int sol_step = 1; //keep solution every 10s
+
+    //number of iterations
+    int size = (int) ceil((end_x-start_x+h_x)/h_x);
+    int steps = (int) ceil((end_t+h_t)/h_t);
+    int sol_size = (int) ceil((end_t+1)/sol_step);
+    
+    //declare arrays in space
+    double x[size]; 
+    double y[size]; 
+    arange(x, start_x, end_x+h_x, h_x);
+    arange(y, start_x, end_x+h_x, h_x);
+
+    //declare array in time
+    double t[steps];
+    arange(t, 0, end_t+h_t, h_t);
+
+    //define constants
+    double u_0=37.0; //initial condition
+    double pb=1000.0;
+    double cb=4200.0;
+    double kappa = 1.0/(pb*cb);
+
+    //define boundary conditions
+    double u_a = 37.0; //dirichlet on left
+    double u_b = 0.0; //neumann on top
+    double u_c = 0.0; //neumann on right
+    double u_d = 0.0; //neumann on bottom
+
+    double u[size][size];
+    double K[size][size];
+    double Sigma[size][size];
+    double Q[size][size];
+
+    int i, j;
+    for(i = 0; i < size; i++)
+    {
+        for(j = 0; j < size; j++)
+        {
+            u[i][j] = u_0;
+            double r = get_distance(x[i],y[j]);
+            K[i][j] = get_k(r);
+            Sigma[i][j] = get_wb(r)*pb*cb;
+            Q[i][j] = get_q(r);
+        }
+    }
+
+    double u_new[size][size];
+
+    int k, i_aux, j_aux;
+    for(k = 0; k < steps; k++)
+    {
+        for(i = 0; i < size; i++)
+        {
+            for(j = 0; j < size; j++)
+            {
+                double kijp = j==size-1 ? harmonic_mean(K[i][size-2], K[i][j]) : harmonic_mean(K[i][j+1], K[i][j]);
+                double kijm = j==0 ? harmonic_mean(K[i][1], K[i][j]) : harmonic_mean(K[i][j-1], K[i][j]);
+                double kipj = i==size-1 ? harmonic_mean(K[size-2][j], K[i][j]) : harmonic_mean(K[i+1][j], K[i][j]);
+                double kimj = i==0 ? harmonic_mean(K[1][j], K[i][j]) : harmonic_mean(K[i-1][j], K[i][j]);
+                //para tratar do tipo Dirichlet, devemos atribuir diretamente no ponto (x_i,y_j)
+                if (j==0)
+                {
+                    u_new[i][j] = u_a;
+                }
+                else
+                {
+                    //Tratando condicoes de contorno do tipo Neumann
+                    double uijp = j==size-1 ? u_new[i][size-2] : u_new[i][j+1];
+                    double uipj = i==size-1 ? u_new[size-2][j] : u_new[i+1][j];
+                    double uimj = i == 0 ? u_new[1][j] : u_new[i-1][j];
+
+                    double uijm = u_new[i][j-1];
+
+                    double f = Sigma[i][j]*(u_0-u[i][j]) + Q[i][j]; //funçao do lado direito f
+
+                    u_new[i][j] = kappa*h_t*((kipj*uipj + kimj*uimj + kijp*uijp + kijm*uijm - (kipj + kimj + kijp + kijm)*u[i][j])/(h_x*h_x) + f) + u[i][j];
+                }
+            }
+        }
+        for(i_aux = 0; i_aux < size; i_aux++)
+        {
+            for(j_aux = 0; j_aux < size; j_aux++)
+            {
+                u[i_aux][j_aux] = u_new[i_aux][j_aux];
+                if(k%((int) ceil(sol_step/h_t))==0)
+                {
+                    printf("%.15f ", u[i_aux][j_aux]);
+                }
+            }
+        }
+        if(k%((int) ceil(sol_step/h_t))==0)
+        {
+            printf("\n");
+        }
+    }
+
+    FILE *file = fopen("u_h_x_0.001_h_t_0.001_300000_steps.txt", "w");
+    write_2d_array_to_file(file, size, size, u);
+    fclose(file);
+
+    return 0;
+}
