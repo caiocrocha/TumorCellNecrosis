@@ -84,18 +84,33 @@ int main()
     double t[steps];
     arange(t, 0, end_t+h_t, h_t);
 
-    //define constants
-    double u_0=37.0; //initial condition
+    //initial condition
+    double u_0=37.0;
+
+    //diffusion constants
     double pb=1000.0;
     double cb=4200.0;
     double kappa = 1.0/(pb*cb);
+    double r_dif=kappa*h_t/(h_x*h_x);
 
-    //define boundary conditions
+    //advection constants
+    int advection=1;
+    double a_x=0, a_y=0;
+    if(advection)
+    {
+        double a_x=1e-3;
+        double a_y=1e-3;
+    }
+    double r_adv_x=a_x*h_t/h_x;
+    double r_adv_y=a_y*h_t/h_x;
+
+    //boundary conditions
     double u_a = 37.0; //dirichlet on left
     double u_b = 0.0; //neumann on top
     double u_c = 0.0; //neumann on right
     double u_d = 0.0; //neumann on bottom
 
+    //declare matrices
     double u[size][size];
     double K[size][size];
     double Sigma[size][size];
@@ -138,12 +153,29 @@ int main()
                     double uijp = j==size-1 ? u_new[i][size-2] : u_new[i][j+1];
                     double uipj = i==size-1 ? u_new[size-2][j] : u_new[i+1][j];
                     double uimj = i == 0 ? u_new[1][j] : u_new[i-1][j];
-
                     double uijm = u_new[i][j-1];
 
                     double f = Sigma[i][j]*(u_0-u[i][j]) + Q[i][j]; //funçao do lado direito f
 
-                    u_new[i][j] = kappa*h_t*((kipj*uipj + kimj*uimj + kijp*uijp + kijm*uijm - (kipj + kimj + kijp + kijm)*u[i][j])/(h_x*h_x) + f) + u[i][j];
+                    double phi_x, phi_y;
+                    if(a_x > 0)
+                    {
+                        phi_x=r_adv_x*(u[i][j]-uimj);
+                    }
+                    else
+                    {
+                        phi_x=r_adv_x*(uipj-u[i][j]);
+                    }
+                    if(a_y > 0)
+                    {
+                        phi_y=r_adv_y*(u[i][j]-uijm);
+                    }
+                    else
+                    {
+                        phi_y=r_adv_y*(uijp-u[i][j]);
+                    }
+
+                    u_new[i][j] = u[i][j] + f*kappa*h_t - phi_x - phi_y + r_dif*(kipj*uipj + kimj*uimj + kijp*uijp + kijm*uijm - (kipj + kimj + kijp + kijm)*u[i][j]);
                 }
             }
         }
