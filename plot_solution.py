@@ -67,7 +67,7 @@ def main():
     ax.set_xlabel('x(mm)')
     ax.set_ylabel('y(mm)')
 
-    plt.savefig('heatmap.png')
+    plt.savefig(f'{directory}/heatmap.png')
     # plt.show()
 
 if __name__=='__main__': main()
