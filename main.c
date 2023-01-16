@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 //Funcoes auxiliares
 
@@ -44,20 +46,7 @@ void arange(double *x, double start, double end, double step)
     }
 } 
 
-void write_2d_array_to_file(FILE* file, int rows, int cols, double array[][cols])
-{
-    int i, j;
-    for (i = 0; i < rows; i++) 
-    {
-        for (j = 0; j < cols; j++) 
-        {
-            fprintf(file, "%.15f ", array[i][j]);
-        }
-        fprintf(file, "\n");
-    }
-}
-
-int main()
+int main(int argc, char *argv[])
 {
     //define space discretization
     double h_x=0.001;
@@ -66,8 +55,8 @@ int main()
 
     //define time discretization
     double h_t=0.001;
-    double end_t = 300.0;
-    int sol_step = 1; //keep solution every 10s
+    double end_t = 600.0;
+    int sol_step = 1; //print solution every 1s of simulation
 
     //number of iterations
     int size = (int) ceil((end_x-start_x+h_x)/h_x);
@@ -94,13 +83,26 @@ int main()
     double r_dif=kappa*h_t/(h_x*h_x);
 
     //advection constants
-    int advection=1;
     double a_x=0, a_y=0;
-    if(advection)
+    if(argc == 2)
     {
-        double a_x=1e-3;
-        double a_y=1e-3;
+        if(strcmp(argv[1], "true") == 0)
+        {
+            a_x=1e-4;
+            a_y=1e-4;
+        }
+        else if(strcmp(argv[1], "false"))
+        {
+            printf("Invalid argument: %s\n", argv[1]);
+            exit(1);
+        }
     }
+    else
+    {
+        printf("One argument expected: true (with advection) or false (without advection).\n");
+        exit(1);
+    }
+    
     double r_adv_x=a_x*h_t/h_x;
     double r_adv_y=a_y*h_t/h_x;
 
@@ -195,10 +197,6 @@ int main()
             printf("\n");
         }
     }
-
-    FILE *file = fopen("u_h_x_0.001_h_t_0.001_300000_steps.txt", "w");
-    write_2d_array_to_file(file, size, size, u);
-    fclose(file);
 
     return 0;
 }
