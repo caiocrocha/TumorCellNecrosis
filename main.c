@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     
     srand(time(NULL));
     double u_0 = 37.0, pb = 1000.0, cb = 4200.0;
-    for (int i = 0; i < 600; i++)
+    for (int i = 0; i < 1000; i++)
     {
         u_0 = ((double) (rand() % (3750 - 3650 + 1)) + 3650) / 100;
         pb = (double) (rand() % (1100 - 900 + 1)) + 900;
