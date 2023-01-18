@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <time.h>
+
 
 //Funcoes auxiliares
 
@@ -46,7 +48,7 @@ void arange(double *x, double start, double end, double step)
     }
 } 
 
-int main(int argc, char *argv[])
+void run_simulation(double a_x, double a_y, double u_0, double pb, double cb)
 {
     //define space discretization
     double h_x=0.001;
@@ -55,7 +57,7 @@ int main(int argc, char *argv[])
 
     //define time discretization
     double h_t=0.001;
-    double end_t = 600.0;
+    double end_t = 60.0;
     int sol_step = 1; //print solution every 1s of simulation
 
     //number of iterations
@@ -73,36 +75,10 @@ int main(int argc, char *argv[])
     double t[steps];
     arange(t, 0, end_t+h_t, h_t);
 
-    //initial condition
-    double u_0=37.0;
-
     //diffusion constants
-    double pb=1000.0;
-    double cb=4200.0;
     double kappa = 1.0/(pb*cb);
     double r_dif=kappa*h_t/(h_x*h_x);
 
-    //advection constants
-    double a_x=0, a_y=0;
-    if(argc == 2)
-    {
-        if(strcmp(argv[1], "true") == 0)
-        {
-            a_x=1e-4;
-            a_y=1e-4;
-        }
-        else if(strcmp(argv[1], "false"))
-        {
-            printf("Invalid argument: %s\n", argv[1]);
-            exit(1);
-        }
-    }
-    else
-    {
-        printf("One argument expected: true (with advection) or false (without advection).\n");
-        exit(1);
-    }
-    
     double r_adv_x=a_x*h_t/h_x;
     double r_adv_y=a_y*h_t/h_x;
 
@@ -186,16 +162,53 @@ int main(int argc, char *argv[])
             for(j_aux = 0; j_aux < size; j_aux++)
             {
                 u[i_aux][j_aux] = u_new[i_aux][j_aux];
-                if(k%((int) ceil(sol_step/h_t))==0)
-                {
-                    printf("%.15f ", u[i_aux][j_aux]);
-                }
+                // if(k%((int) ceil(sol_step/h_t))==0)
+                // {
+                //     printf("%.15f ", u[i_aux][j_aux]);
+                // }
             }
         }
         if(k%((int) ceil(sol_step/h_t))==0)
         {
-            printf("\n");
+            // printf("\n");
+            printf("%.15f ", u[(int) (size/2)][(int) (size/2)]);
         }
+    }
+
+}
+
+int main(int argc, char *argv[])
+{
+    //advection constants
+    double a_x=0, a_y=0;
+    if(argc == 2)
+    {
+        if(strcmp(argv[1], "true") == 0)
+        {
+            a_x=1e-4;
+            a_y=1e-4;
+        }
+        else if(strcmp(argv[1], "false"))
+        {
+            printf("Invalid argument: %s\n", argv[1]);
+            exit(1);
+        }
+    }
+    else
+    {
+        printf("One argument expected: true (with advection) or false (without advection).\n");
+        exit(1);
+    }
+    
+    srand(time(NULL));
+    double u_0 = 37.0, pb = 1000.0, cb = 4200.0;
+    for (int i = 0; i < 600; i++)
+    {
+        u_0 = ((double) (rand() % (3750 - 3650 + 1)) + 3650) / 100;
+        pb = (double) (rand() % (1100 - 900 + 1)) + 900;
+        cb = (double) (rand() % (4300 - 4100 + 1)) + 4100;
+        run_simulation(a_x, a_y, u_0, pb, cb);
+        printf("\n");
     }
 
     return 0;
