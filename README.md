@@ -26,7 +26,7 @@ Run the simulation, printing the solution every second:
 
 The *false* argument runs the simulation without advection. To run it with advection, pass the *true* argument.
 
-A 10 min simulation of the temperature in the tumor region will be run, which takes around 3m20s (Intel i7-1165G7 8GB). 
+A 16 min 40 s simulation of the temperature in the tumor region will be run, which takes around 3 min 20 s (Intel i7-1165G7 8GB). 
 
 The solution will be printed on a single line for each time step, producing a 101 x 101 flattened matrix.
 

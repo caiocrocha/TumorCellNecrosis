@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
     double end_x=0.05;
 
     //define time discretization
-    double h_t=0.001;
-    double end_t = 600.0;
+    double h_t=0.01;
+    double end_t = 1000.0;
     int sol_step = 1; //print solution every 1s of simulation
 
     //number of iterations

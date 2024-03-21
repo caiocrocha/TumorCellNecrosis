@@ -2,7 +2,6 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import os
 import sys
@@ -14,9 +13,11 @@ def load_sol_tempo(loaded_arr):
     # we need to convert it to the original
     # array shape.reshaping to get original
     # matrice with original shape.
+    print('Original shape:', loaded_arr.shape)
     load_original_arr = loaded_arr.reshape(
         loaded_arr.shape[0], loaded_arr.shape[1] // 101, 101)
 
+    print('New shape:', load_original_arr.shape)
     return list(load_original_arr)
 
 def main():
@@ -48,7 +49,7 @@ def main():
     step = 10
     for k in range(0,len(sol_tempo),step):
         fig = plt.figure()
-        ax = fig.gca(projection='3d')
+        ax = fig.add_subplot(projection='3d')
         ax.plot_wireframe(x2,y2,sol_tempo[k], label='t='+"{:.0f} s".format(k*h_t*1000))
         fig.legend()
         ax.set_zlim(37, 55)
@@ -60,7 +61,7 @@ def main():
         # plt.show()
         plt.close()
     
-    sns.heatmap(sol_tempo[-1].T, xticklabels=x, yticklabels=y)
+    sns.heatmap(sol_tempo[-1].T)
     ax = plt.gca()
     ax.invert_yaxis()
     ax.set_title('Temperature in Celsius in the final state')
@@ -69,5 +70,6 @@ def main():
 
     plt.savefig(f'{directory}/heatmap.png')
     # plt.show()
+    print(f'Images saved to {directory}.')
 
 if __name__=='__main__': main()
